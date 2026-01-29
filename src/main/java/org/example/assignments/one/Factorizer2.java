@@ -9,26 +9,23 @@ import java.math.BigInteger;
 
 public class Factorizer2 implements Runnable{
 
-    static class Result {
-        BigInteger factor1 = null;
-        BigInteger factor2 = null;
-        boolean found = false;
-        final Object lock = new Object();
-    }
-
     private final BigInteger startValue;
     private final BigInteger max;
     private final int step;
     private final BigInteger product;
-    private final Result result;
+
+    private static BigInteger factor1 = null;
+    private static BigInteger factor2 = null;
+    public static boolean found = false;
+
+    private static final Object lock = new Object();
 
 
-    public Factorizer2(BigInteger startValue, int step, BigInteger product, Result result) {
+    public Factorizer2(BigInteger startValue, int step, BigInteger product) {
         this.startValue = startValue;
         this.step = step;
         this.product = product;
         this.max = product.sqrt();
-        this.result = result;
 
     }
 
@@ -37,14 +34,14 @@ public class Factorizer2 implements Runnable{
         BigInteger number = startValue;
 
         while (number.compareTo(max) <= 0) {
-            if (result.found) return;
+            if (found) return;
 
             if (product.remainder(number).equals(BigInteger.ZERO)) {
-                synchronized (result.lock) {
-                    if (!result.found) {
-                        result.factor1 = number;
-                        result.factor2 = product.divide(number);
-                        result.found = true;
+                synchronized (lock) {
+                    if (!found) {
+                        factor1 = number;
+                        factor2 = product.divide(number);
+                        found = true;
                     }
 
                 }
@@ -57,24 +54,27 @@ public class Factorizer2 implements Runnable{
 
     public static void main(String[] args) {
         try {
+            found = false;
+            factor1 = null;
+            factor2 = null;
+
 
             InputStreamReader streamReader = new InputStreamReader(System.in);
             BufferedReader consoleReader = new BufferedReader(streamReader);
 
             System.out.println("Enter number of threads: ");
             int numberOfThreads = Integer.parseInt(consoleReader.readLine());
-            System.out.println("Enter product: "); //Example prime number: 51564514170775987
+            System.out.println("Enter product: ");
             BigInteger product = new BigInteger(consoleReader.readLine());
 
             long start = System.nanoTime();
 
             Thread[] threads = new Thread[numberOfThreads];
             Factorizer2[] primeFinders = new Factorizer2[numberOfThreads];
-            Result result = new Result();
 
             for (int i = 0; i < numberOfThreads; i++) {
                 BigInteger startValue = BigInteger.valueOf(2 + i);
-                primeFinders[i] = new Factorizer2(startValue, numberOfThreads, product, result);
+                primeFinders[i] = new Factorizer2(startValue, numberOfThreads, product);
                 threads[i] = new Thread(primeFinders[i]);
             }
 
@@ -88,11 +88,11 @@ public class Factorizer2 implements Runnable{
 
             long stop = System.nanoTime();
 
-            if (result.factor1 == null) {
+            if (factor1 == null) {
                 System.out.println("No factorization possible");
             } else {
-                System.out.println("Factor 1: " + result.factor1);
-                System.out.println("Factor 2: " + result.factor2);
+                System.out.println("Factor 1: " + factor1);
+                System.out.println("Factor 2: " + factor2);
             }
 
             System.out.println("Range searched: [2, " + product.sqrt() + "]");
@@ -108,4 +108,3 @@ public class Factorizer2 implements Runnable{
         }
     }
 }
-
