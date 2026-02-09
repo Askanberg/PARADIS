@@ -21,7 +21,7 @@ class Transaction implements Runnable {
 	}
 
 	/*
-	 * First I take a copy of the operations list to avoid holding the lock on the transaction while running the operations.
+	 * First I make a copy of the operations list to avoid holding the lock on the transaction while e.g running the operations.
 	 * I sort the operations by account id before locking, to ensure that all threads/transactions
 	   lock the accounts in the same order, preventing deadlocks.
 	 * Locks are acquired for all operations in the transaction before executing any of them,
